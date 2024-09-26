@@ -1,0 +1,62 @@
+{
+    "version": "1.0.0",
+    "sections": {
+        "main": [
+            {
+                "answer": {}
+            },
+            {
+                "request": {
+                    "url": "<Your-Webhook-Address-Here>/incomingCalls",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "body": {
+                        "call_sid": "${call.call_id}",
+                        "call_status": "${call.call_state}",
+                        "from_number": "${call.from}",
+                        "to_number": "${call.to}"
+                    }
+                }
+            },
+            {
+                "record_call": {
+                    "format": "wav",
+                    "stereo": "true"
+                }
+            },
+            {
+                "live_transcribe": {
+                    "action": {
+                        "start": {
+                            "webhook": "<Your-Webhook-Address-Here>/transcription",
+                            "lang": "en",
+                            "live_events": false,
+                            "ai_summary": true,
+                            "speech_timeout": 8000,
+                            "vad_silence_ms": 80,
+                            "vad_thresh": 80,
+                            "debug_level": 0,
+                            "direction": [
+                                "remote-caller",
+                                "local-caller"
+                            ],
+                            "speech_engine": "default",
+                            "summary_prompt": "Summarize the primary talking points in this conversation."
+                        }
+                    }
+                }
+            },
+            {
+                "play": "say: Welcome to the SWML Application Resource for SignalWire in Seconds. Please stand by while we transfer you to an IVR."
+            },
+            {
+                "connect": {
+                    "from": "${call.from}",
+                    "to": "/private/<Your-Resource-Name-Here>"
+                }
+            }
+        ]
+    }
+}
