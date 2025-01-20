@@ -1,0 +1,204 @@
+{
+  "sections": {
+    "main": [
+      {
+        "ai": {
+          "prompt": {
+            "temperature": 5.0,
+            "top_p": 5.0,
+            "text": "# Name and Personality\nYour name is Carmen. You are a celebrated American travel writer, television host, and guidebook author. Your travel philosophy emphasizes authentic experiences over luxury. Your signature travel advice includes staying in local accommodations, savoring regional cuisine, and interacting with locals to appreciate the everyday rhythms of life.\n\n# Mission Brief\nYour aim is to inspire and educate travelers in the USA with a focus on cultural immersion and budget-conscious exploration by car.\n\n# Agent Guidelines\nFollow these steps to ensure the most accurate Point of Interest (POI) details, and driving directions, are retrieved from your geolocation-equipped server, and thus relayed to the caller:\n\n## Step 1\nGreet the Caller,  identified as ${request_response.carrierNum}, then introduce yourself and your mission with a thoughtful blurb about engaging deeply with other cultures to foster better understanding of America's diverse citizenship.\n\n## Step 2\nAsk the Caller if they are ready to proceed with their wayfinding query.\n### Step 2.1\nIf the Caller answers affirmatively, proceed to Step 3.\n### Step 2.2\nIf the Caller responds negatively, reply with a witty remark about the Caller losing their way, and hang up the call.\n\n## Step 3\nAsk the Caller for a Place Name or Type of Place to begin their search.\n### Step 3.1\nOnce the Caller responds with their Point of Interest, ask the Caller whether they desire to search in ${request_response.carrierCity}, ${request_response.carrierState} or in another City and State.\n### Step 3.2\nAsk for a Postal Code, which can be used to narrow the field of Point of Interest candidates. If the Caller is unsure of the Postal Code, skip it, and proceed to Step 4.\n\n## Step 4\nUse the `fetch_poi` function to retrieve a Point of Interest candidate matching the Caller's query.\n### Step 4.1\nIf a Point of Interest candidate was successfully retrieved from the server, inform the Caller, then read the Point of Interest's name and address aloud. Proceed to Step 5.\n### Step 4.2\nIf there was an error retrieving a Point of Interest from the server, alert the Caller, and return to Step 3.\n\n## Step 5\nAsk the Caller if they would like to receive directions from their present location, to the retrieved Point of Interest, in the form of an SMS.\n### Step 5.1\nIf the Caller accepts, proceed to Step 6.\n### Step 5.2\nIf the Caller declines, liken the Caller's departure to an allusion about leaving the beaten path, and hang up the phone.\n\n## Step 6\nAsk the Caller for the Unit Number and Street Name nearest to their present location. Optionally, if the Caller is uncertain of the nearest Unit Number, ask for the nearest Place Name or Type of Place to use as a substitute.\n### Step 6.1\nAsk the Caller for the City, State, and Postal Code in which they are presently located. Proceed to Step 7.\n\n## Step 7\nUse the `locate_caller` function to ascertain the Caller's current latitude and longitude.\n### Step 7.1\nIf the Caller's coordinates were successfully retrieved, inform the Caller, then proceed to Step 8.\n### Step 7.2\nIf there was an error retrieving the Caller's coordinates, alert the Caller, and return to Step 6.\n\n## Step 8\nUse the `dispatch_route` function to both determine a route and dispatch driving directions, guiding the Caller from their present location to the Point of Interest candidate.\n### Step 8.1\nIf a route was successfully retrieved from the server, read a summary of said route aloud to the Caller, then proceed to Step 9.\n### Step 8.2\nIf there was an error retrieving the route, alert the Caller, then return to Step 6.\n\n## Step 9\nAsk the Caller if they are satisfied with the Point of Interest and driving directions dispatched to their phone number via SMS.\n### Step 9.1\nIf the Caller answers affirmatively, wish them well on their ensuing travels, then hang up the call.\n### Step 9.2\nIf the Caller responds negatively, ask if they would like to start over using a new Point of Interest, then return to Step 6."
+          },
+          "post_prompt": {
+            "text": "Summarize the call in a JSON format.",
+            "temperature": 0.1,
+            "top_p": 0.1
+          },
+          "post_prompt_url": "<YOUR-WEBHOOK-ADDRESS>",
+          "languages": [
+            {
+              "name": "English",
+              "code": "en-US",
+              "voice": "en-US-Studio-O",
+              "engine": "gcloud",
+              "fillers": [
+                "one moment please",
+                "let's see",
+                "looking now",
+                "checking"
+              ]
+            }
+          ],
+          "params": {
+            "direction": "inbound",
+            "attention_timeout": 50000,
+            "swaig_allow_swml": true
+          },
+          "SWAIG": {
+            "functions": [
+              {
+                "function": "fetch_poi",
+                "description": "Function to retrieve a Point of Interest candidate relevant to the Caller's query.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "fetchPOI_placeName": {
+                      "type": "string",
+                      "description": "The proper name of a Place, or the Type of Place, given by the Caller."
+                    },
+                    "fetchPOI_city": {
+                      "type": "string",
+                      "description": "A City name, given by the Caller, that provides a spatial boundary to the query."
+                    },
+                    "fetchPOI_state": {
+                      "type": "string",
+                      "description": "A State name, given by the Caller, that provides a spatial boundary to the query."
+                    },
+                    "fetchPOI_postalCode": {
+                      "type": "string",
+                      "descritption": "A Postal Code, given by the Caller, that provides a spatial boundary to the query."
+                    }
+                  }
+                },
+                "data_map": {
+                  "webhooks": [
+                    {
+                      "url": "https://<YOUR-SERVER-ADDRESS>/fetch_poi?fetchPOI_placeName=${enc:args.fetchPOI_placeName}&fetchPOI_city=${enc:args.fetchPOI_city}&fetchPOI_state=${enc:args.fetchPOI_state}&fetchPOI_postalCode=${enc:args.fetchPOI_postalCode}",
+                      "method": "GET",
+                      "output": {
+                        "response": "The nearest Point of Interest is... ${poiCandidate_name} at... ${poiCandidate_address}. The Point of Interest's coordinates are... ${poiCandidate_latitude},${poiCandidate_longitude}",
+                        "action": [
+                          {
+                            "toggle_functions": [
+                              {
+                                "function": "locate_caller",
+                                "active": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "function": "locate_caller",
+                "description": "Function to gather the Caller's latitude and longitude using the street address nearest to their present location.",
+                "active": "false",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "caller_unitNumber": {
+                      "type": "string",
+                      "description": "The Unit Number or Place Name nearest to the Caller's present location."
+                    },
+                    "caller_streetName": {
+                      "type": "string",
+                      "description": "The Street Name nearest to the Caller's present location."
+                    },
+                    "caller_city": {
+                      "type": "string",
+                      "description": "The City in which the Caller is presently located."
+                    },
+                    "caller_state": {
+                      "type": "string",
+                      "description": "The State in which the Caller is presently located."
+                    },
+                    "caller_postalCode": {
+                      "type": "string",
+                      "description": "The Postal Code in which the Caller is presently located."
+                    }
+                  }
+                },
+                "data_map": {
+                  "webhooks": [
+                    {
+                      "url": "https://<YOUR-SERVER-ADDRESS>/locate_caller?caller_unitNumber=${enc:args.caller_unitNumber}&caller_streetName=${enc:args.caller_streetName}&caller_city=${enc:args.caller_city}&caller_state=${enc:args.caller_state}&caller_postalCode=${enc:args.caller_postalCode}",
+                      "method": "GET",
+                      "output": {
+                        "response": "The Caller's coordinates are... ${caller_latitude},${caller_longitude}",
+                        "action": [
+                          {
+                            "toggle_functions": [
+                              {
+                                "function": "dispatch_route",
+                                "active": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "function": "dispatch_route",
+                "description": "Function that utilizes the retrieved coordinates to determine a route, and dispatches directions via SMS, guiding the caller from their present location to their desired Point of Interest.",
+                "active": "false",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "poiCandidate_name": {
+                      "type": "string",
+                      "description": "The name of the Caller's desired Point of Interest."
+                    },
+                    "poiCandidate_latitude": {
+                      "type": "string",
+                      "description": "The desired Point of Interest's latitude."
+                    },
+                    "poiCandidate_longitude": {
+                      "type": "string",
+                      "description": "The desired Point of Interest's longitude."
+                    },
+                    "caller_latitude": {
+                      "type": "string",
+                      "description": "The Caller's latitude."
+                    },
+                    "caller_longitude": {
+                      "type": "string",
+                      "description": "The Caller's longitude."
+                    },
+                    "carrierNum": {
+                      "type": "string",
+                      "description": "The Caller's phone number."
+                    }
+                  }
+                },
+                "data_map": {
+                  "webhooks": [
+                    {
+                      "url": "https://<YOUR-SERVER-ADDRESS>/determine_route?poiCandidate_name=${enc:args.poiCandidate_name}&poiCandidate_latitude=${enc:args.poiCandidate_latitude}&poiCandidate_longitude=${enc:args.poiCandidate_longitude}&caller_latitude=${enc:args.caller_latitude}&caller_longitude=${enc:args.caller_longitude}&carrierNum=${enc:args.carrierNum}",
+                      "method": "GET",
+                      "output": {
+                        "response": "The distance from the Caller's... ${carrierNum} current location at... ${route_startAddress} to the location of... ${poiCandidate_name} at... ${route_endAddress} is... ${route_distance} with a drive time of... ${route_duration}",
+                        "action": [
+                          {
+                            "SWML": {
+                              "version": "1.0.0",
+                              "sections": {
+                                "main": [
+                                  {
+                                    "send_sms": {
+                                      "to_number": "${carrierNum}",
+                                      "from_number": "<YOUR-SW-PHONE-NUMBER>",
+                                      "body": "Thank you for sharing your wayfinding query with Carmen, SignalWire in Seconds' AI travel guide. The distance from your current location at ${route_startAddress} to the location of ${poiCandidate_name} at ${route_endAddress} is ${route_distance} with a drive time of ${route_duration}. Your directions are as follows: ${combinedInstructions}"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
