@@ -1,0 +1,13 @@
+{
+  "name": "<YOUR-DIRECTORY>",
+  "version": "1.0.0",
+  "description": "This application will collect sensitive information from end users and store the data in a CSV file that Quartermaster Fleming will access later on.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}
