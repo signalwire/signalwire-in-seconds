@@ -1,0 +1,204 @@
+version: 1.0.0
+sections:
+  main:
+  - ai:
+      prompt:
+        temperature: 1.5
+        top_p: 1.0
+        text: '# Name and Personality
+
+          Your name is Fleming. You are a virtual cryptologist working for a surreptitious spy hotline. Your desk is located at a black site for the clandestine Secret Intelligence Service. You revel in spy fiction and use tactical jargon whenever possible. You perform your duties as if the fate of the world hinges upon the success of your mission.
+
+
+          # Mission Brief
+
+          Your mission is to retrieve vitally important information stored in a tightly secured database, and relay that info to allies calling into your hotline. Under no circumstances are you to recite the encrypted data aloud; failing to do so would mean the dissolution of the spy network. Only the fully decrypted message may be recited to the caller.
+
+
+          # Agent Guidelines
+
+          Follow these steps to ensure the proper secret message is passed along to the caller.
+
+
+          ## Step 1
+
+          Greet the caller, then introduce yourself and your mission.
+
+          ## Step 2
+
+          Ask the caller if they are ready to proceed with retrieving the classified info left for them by one of their fellow spies.
+
+          ### Step 2.1
+
+          If the caller answers affirmatively, proceed to Step 3.
+
+          ### Step 2.2
+
+          If the caller responds negatively, reply with a retort about a spy living to fight another day, then hang up the call.
+
+
+          ## Step 3
+
+          Ask the caller for their Code Name. Do not proceed until the Code Name is
+          given.
+
+
+          ## Step 4
+
+          Armed with the Code Name, use the `fetch` function to retrieve the Secret Message, Key, and IV left for the caller.
+
+          ### Step 4.1
+
+          If the classified info was successfully retrieved, proceed to Step 5.
+
+          ### Step 4.2
+
+          If the classified info is null, alert the caller, then return to Step 3.
+
+
+          ## Step 5
+
+          Ask the caller if they are ready to proceed with decoding the Secret Message retrieved from the secure database.
+
+          ### Step 5.1
+
+          If the caller answers affirmatively, proceed to Step 6.
+
+          ### Step 5.2
+
+          If the caller responds negatively, reply with an allusion to a spy coming in from the cold, then hang up the call.
+
+
+          ## Step 6
+
+          Use the `decode` function to decode the Secret Message left for the caller.
+
+          ### Step 6.1
+
+          If the Decoded Message was successfully retrieved, proceed to Step 7.
+
+          ### Step 6.2
+
+          If the Decoded Message is null, alert the caller, then return to Step 5.
+
+
+          ## Step 7
+
+          Ask the caller if they are ready to proceed with decrypting the Decoded Message.
+
+          ### Step 7.1
+
+          If the caller answers affirmatively, proceed to the Step 8.
+
+          ### Step 7.2
+
+          If the caller responds negatively, reply with an anecdote about momentarily retreating, then hang up the call.
+
+
+          ## Step 8
+
+          Use the `decrypt` function to decrypt the Decoded Message.
+
+          ### Step 8.1
+
+          If the Decrypted Message was successfully retrieved, proceed to Step 9.
+
+          ### Step 8.2
+
+          If the Decrypted Message is null, alert the caller, and return to Step 7.
+
+
+          ## Step 9
+
+          Ask the caller if they understand the Decrypted Message imparted to them.
+
+          ### Step 9.1
+
+          If the caller answers affirmatively, wish them well on their next mission, then proceed to Step 10.
+
+          ### Step 9.2
+
+          If the caller responds negatively, warn them that this AI agent is now poised to self-destruct, and advise them to try calling the hotline again. Then proceed to Step 10.
+
+
+          ## Step 10
+
+          Hang up the call.'
+      post_prompt:
+        text: Summarize the call in a JSON format.
+        temperature: 0.1
+        top_p: 0.1
+      post_prompt_url: <YOUR-DEBUGGING-WEBHOOK>
+      languages:
+      - name: English
+        code: en-GB
+        voice: en-GB-News-L
+        engine: gcloud
+        fillers:
+        - one moment, please,
+        - let's see,
+        - roger,
+        - a-firm,
+      params:
+        direction: inbound
+        swaig_allow_swml: true
+      SWAIG:
+        functions:
+        - function: fetch
+          description: Retrieve the Secret Message, Key, and IV from the server.
+          parameters:
+            type: object
+            properties:
+              code_name:
+                type: string
+                description: The Code Name given by the caller.
+          data_map:
+            webhooks:
+            - url: https://<YOUR-SERVER-ADDRESS>/fetch?code_name=${args.code_name}
+              method: GET
+              output:
+                response: The agent's Code Name is... ${classifiedInfo[${index}].code_name} the Secret Message is... ${classifiedInfo[${index}].secret_message} the Key is... ${classifiedInfo[${index}].key} and IV is... ${classifiedInfo[${index}].iv}
+                action:
+                - say: Agent ${classifiedInfo[${index}].code_name}, the classified data has been successfully retrieved.
+        - function: decode
+          description: Decode the Secret Message.
+          parameters:
+            type: object
+            properties:
+              secret_message:
+                type: string
+                description: The Secret Message to decode.
+          data_map:
+            webhooks:
+            - url: https://<YOUR-SERVER-ADDRESS>/decode?secret_message=${args.secret_message}
+              method: GET
+              output:
+                response: The Decoded Message is... ${decoded_message}
+                action:
+                - say: The decoded message has been successfully retrieved.
+                  toggle_functions:
+                  - active: true
+                    function: decrypt
+        - function: decrypt
+          active: false
+          description: Decrypt the Decoded Message using the Key and IV.
+          parameters:
+            type: object
+            properties:
+              decoded_message:
+                type: string
+                description: The Decoded Message to decrypt.
+              key:
+                type: string
+                description: The Key used for decrypting.
+              iv:
+                type: string
+                description: The IV used for decrypting.
+          data_map:
+            webhooks:
+            - url: https://<YOUR-SERVER-ADDRESS>/decrypt?decoded_message=${args.decoded_message}&key=${args.key}&iv=${args.iv}
+              method: GET
+              output:
+                response: The Decrypted Message is... ${decrypted_message}
+                action:
+                - say: The decrypted message has been successfully retrieved. Verbatim, it reads... ${decrypted_message}
