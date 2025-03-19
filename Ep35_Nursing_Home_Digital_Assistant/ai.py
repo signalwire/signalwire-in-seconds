@@ -113,14 +113,14 @@ def ai_prompt():
                   "webhooks": [
                     {
                       "method": "POST",
-                      "url": "https://space_name.signalwire.com/api/datasphere/documents/search",
+                      "url": "https://<SPACE-DOMAIN>.signalwire.com/api/datasphere/documents/search",
                       "headers": {
                         "Content-Type": "application/json",
                         "Authorization": "Basic OGVhMjI0YzktM--USE--Project_ID:API_KEY--TO-BASE64-ENCODE--NkYjFh"
                       },
                       "params": {
                         "query_string": "${args.user_question}",
-                        "document_id": "680f246c-659e-4fc0-a03c-71bfa3ed17b1"
+                        "document_id": "<YOUR-DOCUMENT-ID>"
                       },
                       "output": {
                         "response": "Answer the patient's question using the information in this document. Do not make up answers: ${chunks[0].text} (Document ID: ${chunks[0].document_id})",
