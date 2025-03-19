@@ -6,8 +6,6 @@ from signalwire.relay.consumer import Consumer
 from dotenv import load_dotenv
 load_dotenv()
 
-
-
 class CustomConsumer(Consumer):
     def setup(self):
         self.project = os.getenv('PROJECT_ID')

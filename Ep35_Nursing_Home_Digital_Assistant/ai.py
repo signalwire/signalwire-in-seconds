@@ -3,8 +3,6 @@ import os
 from flask import Response
 
 def ai_prompt():
-    
-    
     SWML_JSON = """
 {
   "version": "1.0.0",

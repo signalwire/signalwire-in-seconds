@@ -15,7 +15,7 @@
 ---
 
 ## Introduction
-This **Nursing Home AI Agent** automates weekly health assessments for residents using **SignalWire Relay v2** for outbound calls. Once a call connects, the AI agent—powered by **SWML**—verifies the patient’s identity, collects vital health information, and, if necessary, retrieves additional medical guidance via **Datasphere**. The system records patient responses in a local SQLite database and, through its integrated functions, ensures that critical information reaches caregivers without delay.
+This **Nursing Home AI Agent** automates weekly health assessments for residents using **SignalWire RELAY v2** ([RELAY SDK for Python](https://docs.signalwire.com/reference/relay-sdk-python/v2/#relay-sdk-for-python)) for outbound calls. Once a call connects, the AI agent—powered by **SWML**—verifies the patient’s identity, collects vital health information, and, if necessary, retrieves additional medical guidance via **Datasphere**. The system records patient responses in a local SQLite database and, through its integrated functions, ensures that critical information reaches caregivers without delay.
 
 ---
 
