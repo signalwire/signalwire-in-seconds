@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthyStay Nursing Home Dialer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header>
+    <img src="{{ url_for('static', filename='nhlogo.png') }}" alt="HealthyStay Logo">
+  </header>
+
+  <main>
+    <section>
+      <h2>Add a Patient</h2>
+      <form id="patientForm">
+        <div>
+          <label for="first_name">First Name:</label>
+          <input type="text" id="first_name" name="first_name" required>
+        </div>
+
+        <div>
+          <label for="last_name">Last Name:</label>
+          <input type="text" id="last_name" name="last_name" required>
+        </div>
+
+        <div>
+          <label for="patient_phone">Patient Phone (US Only):</label>
+          <input 
+            type="tel" 
+            id="patient_phone" 
+            name="patient_phone" 
+            required 
+            pattern="\+1[0-9]{10}"
+            title="Please enter a valid US phone number in the format +1XXXXXXXXXX" 
+            placeholder="+1XXXXXXXXXX"
+          >
+        </div>
+
+        <div>
+          <label for="dob">Date of Birth:</label>
+          <input 
+            type="text" 
+            id="dob" 
+            name="dob" 
+            required 
+            placeholder="e.g. 01/01/1990"
+          >
+        </div>
+
+        <div>
+          <label for="caregiver_name">Caregiver Name:</label>
+          <input type="text" id="caregiver_name" name="caregiver_name" required>
+        </div>
+
+        <div>
+          <label for="caregiver_phone">Caregiver Phone (US Only):</label>
+          <input 
+            type="tel" 
+            id="caregiver_phone" 
+            name="caregiver_phone" 
+            required 
+            pattern="\+1[0-9]{10}"
+            title="Please enter a valid US phone number in the format +1XXXXXXXXXX"
+            placeholder="+1XXXXXXXXXX"
+          >
+        </div>
+        <button type="submit">Add Patient</button>
+      </form>
+    </section>
+    <section>
+      <h2>Patients List</h2>
+      <ul id="patientsList" aria-live="polite"></ul>
+    </section>
+
+    <section>
+      <h2>Dialer Control</h2>
+      <div class="dialer-button-container">
+        <button id="startDialerBtn">Call Patients</button>
+      </div>
+      <p>Status: <span id="dialerStatus" aria-live="polite">Not started</span></p>
+    </section>
+
+    <section>
+      <h2>Export Responses</h2>
+      <div class="response-container">
+        <button id="exportCsvButton">Export Responses as CSV</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+  <script>
+   
+    const baseUrl = 'https://qz3jlds9-5002.use.devtunnels.ms';
+
+    // Initialize Socket.IO
+    const socket = io({
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+
+    socket.on('connect', function() {
+      console.log('Connected to server');
+    });
+
+    socket.on('disconnect', function() {
+      console.log('Disconnected from server');
+    });
+
+    socket.on('dialer_status', function(data) {
+      console.log('Dialer status:', data.status);
+      document.getElementById('dialerStatus').textContent = data.status;
+    });
+
+  
+    document.getElementById('patientForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      fetch(`${baseUrl}/add_patient`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(res => {
+        if (res.status === 'success') {
+          alert('Patient added successfully');
+          loadPatients();
+          e.target.reset();
+        } else {
+          alert('Failed to add patient');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the patient');
+      });
+    });
+
+   
+    function loadPatients() {
+      fetch(`${baseUrl}/patients`)
+      .then(response => response.json())
+      .then(data => {
+        const patientsList = document.getElementById('patientsList');
+        patientsList.innerHTML = '';
+        data.forEach(patient => {
+          
+          const li = document.createElement('li');
+          li.textContent = 
+            `ID: ${patient[0]}, ` +
+            `Name: ${patient[1]} ${patient[2]}, ` +
+            `DOB: ${patient[3]}, ` +
+            `Patient Phone: ${patient[4]}, ` +
+            `Caregiver: ${patient[5]} (${patient[6]})`;
+          patientsList.appendChild(li);
+        });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while loading patients');
+      });
+    }
+
+    // dialer
+    document.getElementById('startDialerBtn').addEventListener('click', function() {
+      fetch(`${baseUrl}/start_dialer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.status === 'success') {
+          alert('Dialer started successfully');
+          document.getElementById('dialerStatus').textContent = 'Started';
+        } else {
+          alert(`Failed to start dialer: ${data.message}`);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while starting the dialer');
+      });
+    });
+
+    // Export CSV
+    document.getElementById('exportCsvButton').addEventListener('click', function() {
+      window.location.href = `${baseUrl}/export_csv`;
+    });
+
+  
+    window.onload = function() {
+      loadPatients();
+    };
+  </script>
+</body>
+</html>
