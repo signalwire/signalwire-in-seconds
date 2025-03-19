@@ -1,7 +1,6 @@
 import logging
 import os
 import sqlite3
-import time
 from signalwire.relay.consumer import Consumer
 from dotenv import load_dotenv
 load_dotenv()

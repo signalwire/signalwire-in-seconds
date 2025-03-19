@@ -1,5 +1,4 @@
 
-import os
 from flask import Response
 
 def ai_prompt():

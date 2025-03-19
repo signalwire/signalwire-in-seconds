@@ -1,6 +1,5 @@
 import io
 import csv
-import re
 import sqlite3
 import subprocess
 from flask import Flask, jsonify, request, render_template, make_response
